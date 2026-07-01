@@ -103,25 +103,7 @@ Success Response
 
 ---
 
-# 📂 Repository Structure
 
-```
-tableflow-qr-ordering
-
-README.md
-
-workflow.json
-
-workflow-overview.png
-
-customer-menu.png
-
-telegram-notification.png
-
-google-sheet.png
-
-demo.mp4
-```
 
 ---
 
@@ -129,32 +111,25 @@ demo.mp4
 
 ## Workflow
 
-![Workflow](workflow-overview.png)
+( workflow-architecture.PNG )
 
 ---
 
 ## Customer Menu
 
-![Customer Menu](customer-menu.png)
+( order-cart-page.png )
 
 ---
 
 ## Telegram Notification
 
-![Telegram](telegram-notification.png)
+( telegram-order-notification.png )
 
 ---
 
-## Google Sheets
+workflow JSON
 
-![Google Sheets](google-sheet.png)
-
----
-
-# 🎥 Demo Video
-
-A demonstration video is included in this repository.
-
+( qr-ordering-workflow.json )
 ---
 
 # 💼 Real Business Use Case
