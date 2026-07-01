@@ -1,0 +1,165 @@
+{
+  "name": "Beach Shack Order System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "beach-order",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-receive",
+      "name": "Webhook - Receive Order",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "beach-shack-orders"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format the order for Telegram\nconst orderData = $input.item.json;\n\n// Build order message\nlet message = `🔔 *NEW ORDER RECEIVED*\\n\\n`;\nmessage += `📋 Order: ${orderData.orderNumber}\\n`;\nmessage += `🪑 Table: ${orderData.tableNumber}\\n`;\nmessage += `⏰ Time: ${new Date(orderData.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\\n\\n`;\n\nmessage += `*ITEMS:*\\n`;\nmessage += `━━━━━━━━━━━━━━━━\\n`;\n\norderData.items.forEach(item => {\n  message += `${item.quantity}x ${item.name}\\n`;\n  message += `   ₹${item.price} × ${item.quantity} = ₹${item.subtotal}\\n\\n`;\n});\n\nmessage += `━━━━━━━━━━━━━━━━\\n`;\nmessage += `💰 *TOTAL: ₹${orderData.total}*\\n\\n`;\nmessage += `⚡ Please prepare this order ASAP!`;\n\nreturn {\n  json: {\n    message: message,\n    orderData: orderData\n  }\n};"
+      },
+      "id": "format-message",
+      "name": "Format Order Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-notify",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Beach Orders"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "orderNumber": "={{ $json.orderData.orderNumber }}",
+            "tableNumber": "={{ $json.orderData.tableNumber }}",
+            "timestamp": "={{ $json.orderData.timestamp }}",
+            "items": "={{ JSON.stringify($json.orderData.items) }}",
+            "total": "={{ $json.orderData.total }}",
+            "status": "Pending"
+          }
+        },
+        "options": {}
+      },
+      "id": "google-sheets-log",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        680,
+        480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"orderNumber\": $json.orderData.orderNumber, \"message\": \"Order received successfully\" } }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Response - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Receive Order": {
+      "main": [
+        [
+          {
+            "node": "Format Order Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Order Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Telegram": {
+      "main": [
+        [
+          {
+            "node": "Response - Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-02-02T00:00:00.000Z",
+  "versionId": "1"
+}
